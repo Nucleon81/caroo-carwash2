@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Car Wash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-circle">CW</div>
+            <div>
+                <div class="brand">Car Wash Admin</div>
+                <div class="tagline">Control Center</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <button class="nav-link active" data-target="usersSection">Users</button>
+            <button class="nav-link" data-target="servicesSection">Services</button>
+            <button class="nav-link" data-target="addOnsSection">Add-Ons</button>
+            <button class="nav-link" data-target="bookingsSection">Bookings</button>
+            <button class="nav-link" data-target="analyticsSection">Analytics</button>
+            <button class="nav-link" data-target="pushSection">Push</button>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn btn-ghost full-width" onclick="logout()">Logout</button>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">Monitor users, services, add-ons, and bookings in one place.</p>
+            </div>
+            <div class="topbar-actions">
+                <span class="pill success" id="envTag">LOCAL API</span>
+            </div>
+        </header>
+
+        <!-- Summary cards -->
+        <section class="cards-row">
+            <div class="card stat-card">
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value" id="statUsers">–</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">Total Bookings</div>
+                <div class="stat-value" id="statBookings">–</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">Total Services</div>
+                <div class="stat-value" id="statServices">–</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">Total Add-Ons</div>
+                <div class="stat-value" id="statAddOns">–</div>
+            </div>
+        </section>
+
+        <!-- Sections -->
+        <section id="usersSection" class="panel active-panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Users</h2>
+                    <p>Manage registered customers and admin accounts.</p>
+                </div>
+                <div class="panel-actions">
+                    <input type="text" id="userSearch" class="input input-sm" placeholder="Search by mobile/name"
+                           oninput="searchTable('usersTable', this.value)">
+                    <button onclick="fetchUsers()" class="btn btn-primary btn-sm">Load</button>
+                    <button onclick="exportToCSV('usersTable','users.csv')" class="btn btn-outline btn-sm">Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="usersTable">
+                    <thead>
+                    <tr>
+                        <th>Mobile</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="table-empty" id="usersEmpty">Click "Load" to fetch users.</div>
+            </div>
+        </section>
+
+        <section id="pushSection" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Push Notifications</h2>
+                    <p>Send a Firebase push notification to all users.</p>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 8px;">
+                <label class="field-label" for="pushTitle">Title</label>
+                <input type="text" id="pushTitle" class="input" placeholder="e.g., Weekend Offer">
+
+                <label class="field-label" for="pushMessage">Message</label>
+                <textarea id="pushMessage" class="input" rows="4" placeholder="Describe the offer or update"></textarea>
+
+                <div style="margin-top: 10px; display:flex; gap:8px; justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="sendPushToAll()">Send Push to All Users</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="servicesSection" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Services</h2>
+                    <p>Configure wash services and prices.</p>
+                </div>
+                <div class="panel-actions">
+                    <button onclick="fetchServices()" class="btn btn-primary btn-sm">Load</button>
+                    <button onclick="showAddServiceModal()" class="btn btn-secondary btn-sm">Add Service</button>
+                    <button onclick="exportToCSV('servicesTable','services.csv')" class="btn btn-outline btn-sm">Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="servicesTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="table-empty" id="servicesEmpty">Click "Load" to fetch services.</div>
+            </div>
+        </section>
+
+        <section id="addOnsSection" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Add-Ons</h2>
+                    <p>Manage additional services and pricing.</p>
+                </div>
+                <div class="panel-actions">
+                    <button onclick="fetchAddOns()" class="btn btn-primary btn-sm">Load</button>
+                    <button onclick="showAddAddOnModal()" class="btn btn-secondary btn-sm">Add Add-On</button>
+                    <button onclick="exportToCSV('addOnsTable','add-ons.csv')" class="btn btn-outline btn-sm">Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="addOnsTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="table-empty" id="addOnsEmpty">Click "Load" to fetch add-ons.</div>
+            </div>
+        </section>
+
+        <section id="bookingsSection" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Bookings</h2>
+                    <p>Track, update, and review all bookings.</p>
+                </div>
+                <div class="panel-actions">
+                    <input type="text" id="bookingSearch" class="input input-sm" placeholder="Search by ID/user"
+                           oninput="searchTable('bookingsTable', this.value)">
+                    <button onclick="fetchBookings()" class="btn btn-primary btn-sm">Load</button>
+                    <button onclick="exportToCSV('bookingsTable','bookings.csv')" class="btn btn-outline btn-sm">Export CSV</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="bookingsTable">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="table-empty" id="bookingsEmpty">Click "Load" to fetch bookings.</div>
+            </div>
+        </section>
+
+        <section id="analyticsSection" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Analytics</h2>
+                    <p>High-level overview of platform activity.</p>
+                </div>
+                <div class="panel-actions">
+                    <button onclick="fetchAnalytics()" class="btn btn-primary btn-sm">Refresh Stats</button>
+                </div>
+            </div>
+            <div id="analytics" class="analytics-card card">
+                <!-- Filled by script.js fetchAnalytics() -->
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modals -->
+<div id="overlay" class="overlay" style="display:none;"></div>
+
+<div id="addServiceModal" class="modal" style="display:none;">
+    <div class="modal-header">
+        <h3>Add / Edit Service</h3>
+        <button class="modal-close" onclick="closeModal('addServiceModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <label class="field-label">ID</label>
+        <input type="text" id="serviceId" class="input" readonly>
+
+        <label class="field-label">Service Name</label>
+        <input type="text" id="serviceName" class="input">
+
+        <label class="field-label">Description</label>
+        <textarea id="serviceDescription" class="input" rows="3" placeholder="Short description of this service"></textarea>
+
+        <label class="field-label">Price</label>
+        <input type="number" id="servicePrice" class="input" placeholder="e.g., 499">
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="saveService()">Save</button>
+            <button class="btn btn-ghost" onclick="closeModal('addServiceModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="addAddOnModal" class="modal" style="display:none;">
+    <div class="modal-header">
+        <h3>Add / Edit Add-On</h3>
+        <button class="modal-close" onclick="closeModal('addAddOnModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <label class="field-label">ID</label>
+        <input type="text" id="addOnId" class="input" placeholder="(auto or readonly)" readonly>
+
+        <label class="field-label">Add-On Name</label>
+        <input type="text" id="addOnName" class="input" placeholder="e.g., Interior Vacuum">
+
+        <label class="field-label">Price</label>
+        <input type="number" id="addOnPrice" class="input" placeholder="e.g., 199">
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="saveAddOn()">Save</button>
+            <button class="btn btn-ghost" onclick="closeModal('addAddOnModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="bookingDetailsModal" class="modal" style="display:none;">
+    <div class="modal-header">
+        <h3>Booking Details</h3>
+        <button class="modal-close" onclick="closeModal('bookingDetailsModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="bookingDetailsContent"></div>
+</div>
+
+<div id="reviewModal" class="modal" style="display:none;">
+    <div class="modal-header">
+        <h3>Booking Review</h3>
+        <button class="modal-close" onclick="closeModal('reviewModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+        <label class="field-label">Review</label>
+        <textarea id="reviewText" class="input" rows="4" placeholder="Customer feedback"></textarea>
+
+        <label class="field-label">Rating (1–5)</label>
+        <input type="number" id="reviewRating" class="input" min="1" max="5">
+
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="saveReview()">Save</button>
+            <button class="btn btn-ghost" onclick="closeModal('reviewModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="loading" class="loading" style="display:none;">Loading...</div>
+
+<script src="script.js"></script>
+<script>
+    // Sidebar navigation
+    document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.getAttribute('data-target');
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+            document.getElementById(target).classList.add('active-panel');
+        });
+    });
+
+    // Overlay control for modals
+    const originalCloseModal = window.closeModal;
+    window.closeModal = function (modalId) {
+        document.getElementById('overlay').style.display = 'none';
+        originalCloseModal(modalId);
+    };
+    ['addServiceModal', 'addAddOnModal', 'bookingDetailsModal', 'reviewModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const observer = new MutationObserver(() => {
+                const anyOpen = Array.from(document.querySelectorAll('.modal'))
+                    .some(m => m.style.display === 'block');
+                document.getElementById('overlay').style.display = anyOpen ? 'block' : 'none';
+            });
+            observer.observe(el, { attributes: true, attributeFilter: ['style'] });
+        }
+    });
+
+    // Hook into fetchWithAuth to show loading/toasts
+    const _fetchWithAuth = window.fetchWithAuth;
+    window.fetchWithAuth = async (...args) => {
+        document.getElementById('loading').style.display = 'flex';
+        try {
+            const res = await _fetchWithAuth(...args);
+            return res;
+        } catch (e) {
+            const toast = document.getElementById('toast');
+            toast.textContent = e.message;
+            toast.className = 'toast error';
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2500);
+            throw e;
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    };
+
+    // Update stat cards from analytics
+    const originalFetchAnalytics = window.fetchAnalytics;
+    window.fetchAnalytics = async () => {
+        await originalFetchAnalytics();
+        try {
+            const analyticsDiv = document.getElementById('analytics');
+            const text = analyticsDiv.textContent || '';
+            const matchNum = (label) => {
+                const r = new RegExp(label + ':\\s*(\\d+)', 'i').exec(text);
+                return r ? r[1] : '–';
+            };
+            document.getElementById('statUsers').textContent = matchNum('Total Users');
+            document.getElementById('statBookings').textContent = matchNum('Total Bookings');
+            document.getElementById('statServices').textContent = matchNum('Total Services');
+            document.getElementById('statAddOns').textContent = matchNum('Total Add-Ons');
+        } catch (e) {
+            // ignore
+        }
+    };
+</script>
+</body>
+
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Car Wash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-body">
+<div class="auth-wrapper">
+    <div class="auth-card glass">
+        <h1 class="brand">Car Wash Admin</h1>
+        <h2 class="auth-title">Sign in with OTP</h2>
+
+        <label class="field-label" for="mobileNumber">Mobile Number</label>
+        <input type="text" id="mobileNumber" class="input" placeholder="+911234567890">
+
+        <button class="btn btn-primary full-width" onclick="sendOtp()">Send OTP</button>
+
+        <div id="otpSection" class="otp-section" style="display: none;">
+            <label class="field-label" for="otp">OTP</label>
+            <input type="text" id="otp" class="input" placeholder="Enter 6-digit OTP">
+            <button class="btn btn-secondary full-width" onclick="verifyOtp()">Verify & Continue</button>
+        </div>
+
+        <p class="auth-hint">OTP is sent via your existing backend: <span class="code">/api/auth/login</span> and <span class="code">/api/auth/verify-otp</span>.</p>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    const AUTH_BASE = 'http://localhost:8080/api/auth';
+
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type;
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+    }
+
+    function sendOtp() {
+        const mobile = document.getElementById('mobileNumber').value.trim();
+        if (!mobile) {
+            showToast('Please enter a mobile number', 'error');
+            return;
+        }
+
+        fetch(`${AUTH_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobileNumber: mobile })
+        }).then(response => {
+            if (!response.ok) throw new Error('Failed to send OTP');
+            return response.text();
+        }).then(message => {
+            showToast(message || 'OTP sent successfully', 'success');
+            document.getElementById('otpSection').style.display = 'block';
+        }).catch(error => showToast(error.message, 'error'));
+    }
+
+    function verifyOtp() {
+        const mobile = document.getElementById('mobileNumber').value.trim();
+        const otp = document.getElementById('otp').value.trim();
+
+        if (!otp) {
+            showToast('Please enter the OTP', 'error');
+            return;
+        }
+
+        fetch(`${AUTH_BASE}/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mobileNumber: mobile, otp: otp })
+        }).then(response => {
+            if (!response.ok) throw new Error('OTP verification failed');
+            return response.text();
+        }).then(token => {
+            if (token) {
+                localStorage.setItem('jwt', token);
+                showToast('Login successful! Redirecting...', 'success');
+                setTimeout(() => window.location.href = 'index.html', 1000);
+            } else {
+                showToast('Invalid OTP', 'error');
+            }
+        }).catch(error => showToast(error.message, 'error'));
+    }
+</script>
+</body>
+</html>
